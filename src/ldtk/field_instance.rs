@@ -46,7 +46,7 @@ pub struct FieldInstance {
 }
 
 #[derive(Serialize, Deserialize)]
-struct FieldInstanceHelper {
+pub struct FieldInstanceHelper {
     #[serde(rename = "__identifier")]
     pub identifier: String,
 
@@ -66,16 +66,8 @@ struct FieldInstanceHelper {
     pub real_editor_values: Vec<Option<serde_json::Value>>,
 }
 
-#[derive(Deserialize)]
-struct ColorHelper(#[serde(with = "color")] Color);
-
-impl<'de> Deserialize<'de> for FieldInstance {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let helper = FieldInstanceHelper::deserialize(deserializer)?;
-
+impl FieldInstance {
+    pub fn from_helper<E>(helper: FieldInstanceHelper) -> Result<Self, E> where E: serde::de::Error {
         let value = match helper.field_instance_type.as_str() {
             "Int" => FieldValue::Int(
                 Option::<i32>::deserialize(helper.value).map_err(de::Error::custom)?,
@@ -185,6 +177,20 @@ impl<'de> Deserialize<'de> for FieldInstance {
             real_editor_values: helper.real_editor_values,
             value,
         })
+    }
+}
+
+#[derive(Deserialize)]
+struct ColorHelper(#[serde(with = "color")] Color);
+
+impl<'de> Deserialize<'de> for FieldInstance {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let helper = FieldInstanceHelper::deserialize(deserializer)?;
+
+        Self::from_helper(helper)
     }
 }
 
