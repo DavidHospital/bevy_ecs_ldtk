@@ -67,7 +67,7 @@ pub struct FieldInstanceHelper {
 }
 
 impl FieldInstance {
-    pub fn from_helper<E>(helper: FieldInstanceHelper) -> Result<Self, E> where E: serde::de::Error {
+    pub fn from_helper(helper: FieldInstanceHelper) -> Result<Self, serde_json::Error> {
         let value = match helper.field_instance_type.as_str() {
             "Int" => FieldValue::Int(
                 Option::<i32>::deserialize(helper.value).map_err(de::Error::custom)?,
@@ -190,7 +190,7 @@ impl<'de> Deserialize<'de> for FieldInstance {
     {
         let helper = FieldInstanceHelper::deserialize(deserializer)?;
 
-        Self::from_helper(helper)
+        Self::from_helper(helper).map_err(de::Error::custom)
     }
 }
 
